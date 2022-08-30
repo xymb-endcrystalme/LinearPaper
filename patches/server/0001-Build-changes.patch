@@ -5,7 +5,7 @@ Subject: [PATCH] Build changes
 
 
 diff --git a/build.gradle.kts b/build.gradle.kts
-index 2374cc9bab5039d0a0dc11d4b2ec573ab75778a7..bdbdb76d703e43dde01b1bcc786319f5a056b7d5 100644
+index 2374cc9bab5039d0a0dc11d4b2ec573ab75778a7..7c159a0693b9529b24258ac3090ba6ee7758a567 100644
 --- a/build.gradle.kts
 +++ b/build.gradle.kts
 @@ -9,8 +9,12 @@ plugins {
@@ -14,12 +14,12 @@ index 2374cc9bab5039d0a0dc11d4b2ec573ab75778a7..bdbdb76d703e43dde01b1bcc786319f5
  dependencies {
 -    implementation(project(":paper-api"))
 -    implementation(project(":paper-mojangapi"))
-+    // ForkTest start
-+    implementation(project(":forktest-api"))
++    // LinearPaper start
++    implementation(project(":linearpaper-api"))
 +    implementation("io.papermc.paper:paper-mojangapi:1.19.2-R0.1-SNAPSHOT") {
 +        exclude("io.papermc.paper", "paper-api")
 +    }
-+    // ForkTest end
++    // LinearPaper end
      // Paper start
      implementation("org.jline:jline-terminal-jansi:3.21.0")
      implementation("net.minecrell:terminalconsoleappender:1.3.0")
@@ -28,7 +28,7 @@ index 2374cc9bab5039d0a0dc11d4b2ec573ab75778a7..bdbdb76d703e43dde01b1bcc786319f5
              "Main-Class" to "org.bukkit.craftbukkit.Main",
              "Implementation-Title" to "CraftBukkit",
 -            "Implementation-Version" to "git-Paper-$implementationVersion",
-+            "Implementation-Version" to "git-ForkTest-$implementationVersion", // ForkTest
++            "Implementation-Version" to "git-LinearPaper-$implementationVersion", // LinearPaper
              "Implementation-Vendor" to date, // Paper
              "Specification-Title" to "Bukkit",
              "Specification-Version" to project.version,
@@ -37,12 +37,12 @@ index 2374cc9bab5039d0a0dc11d4b2ec573ab75778a7..bdbdb76d703e43dde01b1bcc786319f5
      block: JavaExec.() -> Unit
  ): TaskProvider<JavaExec> = register<JavaExec>(name) {
 -    group = "paper"
-+    group = "paperweight" // ForkTest
++    group = "paperweight" // LinearPaper
      mainClass.set("org.bukkit.craftbukkit.Main")
      standardInput = System.`in`
      workingDir = rootProject.layout.projectDirectory
 diff --git a/src/main/java/net/minecraft/server/MinecraftServer.java b/src/main/java/net/minecraft/server/MinecraftServer.java
-index d2161a3c3b9a2b2d463ac778656c95167c10a49d..fd48cea4543296292f6eb5c6e249e9f464f30668 100644
+index d2161a3c3b9a2b2d463ac778656c95167c10a49d..a8ce4df4c9acefaf784ca71726667cbea32abe1f 100644
 --- a/src/main/java/net/minecraft/server/MinecraftServer.java
 +++ b/src/main/java/net/minecraft/server/MinecraftServer.java
 @@ -1673,7 +1673,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
@@ -50,12 +50,12 @@ index d2161a3c3b9a2b2d463ac778656c95167c10a49d..fd48cea4543296292f6eb5c6e249e9f4
      @DontObfuscate
      public String getServerModName() {
 -        return "Paper"; // Paper - Paper > // Spigot - Spigot > // CraftBukkit - cb > vanilla!
-+        return "ForkTest"; // ForkTest - ForkTest > // Paper - Paper > // Spigot - Spigot > // CraftBukkit - cb > vanilla!
++        return "LinearPaper"; // LinearPaper - LinearPaper > // Paper - Paper > // Spigot - Spigot > // CraftBukkit - cb > vanilla!
      }
  
      public SystemReport fillSystemReport(SystemReport details) {
 diff --git a/src/main/java/org/bukkit/craftbukkit/CraftServer.java b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
-index b777c1294370bdc68bc6265b039e2a405d89f2f5..cc4cf7f19e8efe0704cc079572ade6c919d1f562 100644
+index b443aba38258f501f8f00be6b055f07b709277c4..0fd4ce8c311fba70e19ed9ddc029a492a8b9f4c2 100644
 --- a/src/main/java/org/bukkit/craftbukkit/CraftServer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
 @@ -248,7 +248,7 @@ import javax.annotation.Nullable; // Paper
@@ -63,12 +63,12 @@ index b777c1294370bdc68bc6265b039e2a405d89f2f5..cc4cf7f19e8efe0704cc079572ade6c9
  
  public final class CraftServer implements Server {
 -    private final String serverName = "Paper"; // Paper
-+    private final String serverName = "ForkTest"; // ForkTest // Paper
++    private final String serverName = "LinearPaper"; // LinearPaper // Paper
      private final String serverVersion;
      private final String bukkitVersion = Versioning.getBukkitVersion();
      private final Logger logger = Logger.getLogger("Minecraft");
 diff --git a/src/main/java/org/bukkit/craftbukkit/util/Versioning.java b/src/main/java/org/bukkit/craftbukkit/util/Versioning.java
-index 774556a62eb240da42e84db4502e2ed43495be17..21f39bd0c33ef2635249298e6a247afba8b05742 100644
+index 774556a62eb240da42e84db4502e2ed43495be17..e3e03731260ca24afe35995866fd0fcc32f8bd61 100644
 --- a/src/main/java/org/bukkit/craftbukkit/util/Versioning.java
 +++ b/src/main/java/org/bukkit/craftbukkit/util/Versioning.java
 @@ -11,7 +11,7 @@ public final class Versioning {
@@ -76,7 +76,7 @@ index 774556a62eb240da42e84db4502e2ed43495be17..21f39bd0c33ef2635249298e6a247afb
          String result = "Unknown-Version";
  
 -        InputStream stream = Bukkit.class.getClassLoader().getResourceAsStream("META-INF/maven/io.papermc.paper/paper-api/pom.properties");
-+        InputStream stream = Bukkit.class.getClassLoader().getResourceAsStream("META-INF/maven/com.example.paperfork/forktest-api/pom.properties"); // ForkTest
++        InputStream stream = Bukkit.class.getClassLoader().getResourceAsStream("META-INF/maven/me.endcrystal.linearpaper/linearpaper-api/pom.properties"); // LinearPaper
          Properties properties = new Properties();
  
          if (stream != null) {

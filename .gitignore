@@ -46,7 +46,7 @@ out/
 # other stuff
 run/
 
-forktest-server
-forktest-api
+linearpaper-server
+linearpaper-api
 
 !gradle/wrapper/gradle-wrapper.jar
