@@ -30,3 +30,8 @@ jobs:
         run: ./gradlew applyPatches --stacktrace
       - name: Build
         run: ./gradlew build --stacktrace
+      - name: Upload LinearPaper jar
+        uses: actions/upload-artifact@v2
+        with:
+          name: linearpaper-paperclip-1.19.2-R0.1-SNAPSHOT-reobf.jar
+          path: build/libs/linearpaper-paperclip-1.19.2-R0.1-SNAPSHOT-reobf.jar
