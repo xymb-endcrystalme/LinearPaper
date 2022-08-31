@@ -30,11 +30,11 @@ jobs:
         run: ./gradlew applyPatches --stacktrace
       - name: Build
         run: ./gradlew createReobfPaperclipJar --stacktrace
-      - name: Upload LinearPaper jar
-        uses: actions/upload-artifact@v2
-        with:
-          name: linearpaper-paperclip-1.19.2-R0.1-SNAPSHOT-reobf.jar
-          path: build/libs/linearpaper-paperclip-1.19.2-R0.1-SNAPSHOT-reobf.jar
+#      - name: Upload LinearPaper jar
+#        uses: actions/upload-artifact@v2
+#        with:
+#          name: linearpaper-paperclip-1.19.2-R0.1-SNAPSHOT-reobf.jar
+#          path: build/libs/linearpaper-paperclip-1.19.2-R0.1-SNAPSHOT-reobf.jar
       - name: Set outputs
         id: vars
         run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
