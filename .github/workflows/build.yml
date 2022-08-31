@@ -29,7 +29,7 @@ jobs:
       - name: Apply Patches
         run: ./gradlew applyPatches --stacktrace
       - name: Build
-        run: ./gradlew build --stacktrace
+        run: ./gradlew createReobfPaperclipJar --stacktrace
       - name: Upload LinearPaper jar
         uses: actions/upload-artifact@v2
         with:
