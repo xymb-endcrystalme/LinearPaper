@@ -5,7 +5,7 @@ Subject: [PATCH] Linear region file format.
 
 
 diff --git a/build.gradle.kts b/build.gradle.kts
-index 7c159a0693b9529b24258ac3090ba6ee7758a567..b879dfa3bf2b4ffa794d06fb2b0c061c5c0f9beb 100644
+index b133621c1c320bf65a40accd37ab89bb89dd0de7..2460acf251150b5ee8806572e15324ebff9e72b7 100644
 --- a/build.gradle.kts
 +++ b/build.gradle.kts
 @@ -14,6 +14,8 @@ dependencies {
@@ -17,6 +17,26 @@ index 7c159a0693b9529b24258ac3090ba6ee7758a567..b879dfa3bf2b4ffa794d06fb2b0c061c
      // LinearPaper end
      // Paper start
      implementation("org.jline:jline-terminal-jansi:3.21.0")
+diff --git a/src/main/java/io/papermc/paper/chunk/system/io/RegionFileIOThread.java b/src/main/java/io/papermc/paper/chunk/system/io/RegionFileIOThread.java
+index a08cde4eefe879adcee7c4118bc38f98c5097ed0..85949a5907785e0bb015f4a0c518fdcffedc5e30 100644
+--- a/src/main/java/io/papermc/paper/chunk/system/io/RegionFileIOThread.java
++++ b/src/main/java/io/papermc/paper/chunk/system/io/RegionFileIOThread.java
+@@ -1287,13 +1287,8 @@ public final class RegionFileIOThread extends PrioritisedQueueExecutorThread {
+                 } catch (final ThreadDeath thr) {
+                     throw thr;
+                 } catch (final Throwable thr) {
+-                    if (thr instanceof RegionFileStorage.RegionFileSizeException) {
+-                        final int maxSize = RegionFile.MAX_CHUNK_SIZE / (1024 * 1024);
+-                        LOGGER.error("Chunk at (" + this.chunkX + "," + this.chunkZ + ") in '" + this.world.getWorld().getName() + "' exceeds max size of " + maxSize + "MiB, it has been deleted from disk.");
+-                    } else {
+-                        failedWrite = thr instanceof IOException;
+-                        LOGGER.error("Failed to write chunk data for task: " + this.toString(), thr);
+-                    }
++                    failedWrite = thr instanceof IOException;
++                    LOGGER.error("Failed to write chunk data for task: " + this.toString(), thr);
+                 }
+ 
+                 final boolean finalFailWrite = failedWrite;
 diff --git a/src/main/java/net/minecraft/util/worldupdate/WorldUpgrader.java b/src/main/java/net/minecraft/util/worldupdate/WorldUpgrader.java
 index 2955c1ee153c410ea45fe367bac8597621c9bbd0..df2754d48b6591c1d486610c25e3b494ee98b403 100644
 --- a/src/main/java/net/minecraft/util/worldupdate/WorldUpgrader.java
@@ -40,7 +60,7 @@ index 2955c1ee153c410ea45fe367bac8597621c9bbd0..df2754d48b6591c1d486610c25e3b494
  
          if (afile == null) {
 diff --git a/src/main/java/net/minecraft/world/level/chunk/storage/RegionFile.java b/src/main/java/net/minecraft/world/level/chunk/storage/RegionFile.java
-index fc3442b4c7e1f22080fe6bf36d4fade162d6709e..717c2ea94efa9c385d81d4c6a462f467c0eab20a 100644
+index fc3442b4c7e1f22080fe6bf36d4fade162d6709e..a018f2d05df422e3682dfab9e219cbf710cbe921 100644
 --- a/src/main/java/net/minecraft/world/level/chunk/storage/RegionFile.java
 +++ b/src/main/java/net/minecraft/world/level/chunk/storage/RegionFile.java
 @@ -3,10 +3,14 @@ package net.minecraft.world.level.chunk.storage;
@@ -443,7 +463,7 @@ index fc3442b4c7e1f22080fe6bf36d4fade162d6709e..717c2ea94efa9c385d81d4c6a462f467
 -                for (int chunkZ = 0; chunkZ < 32; ++chunkZ) {
 -                    int location = chunkX | (chunkZ << 5);
 -                    int isAikarOversized = hasAikarOversized[location] ? 1 : 0;
-+            DataInputStream dataStream = new DataInputStream(new ZstdInputStream​(new ByteArrayInputStream(rawCompressed)));
++            DataInputStream dataStream = new DataInputStream(new ZstdInputStream(new ByteArrayInputStream(rawCompressed)));
  
 -                    this.oversizedCount += isAikarOversized;
 -                    this.oversized[location] = (byte)isAikarOversized;
@@ -745,8 +765,8 @@ index fc3442b4c7e1f22080fe6bf36d4fade162d6709e..717c2ea94efa9c385d81d4c6a462f467
 -            return null;
 -        }
 +        ByteArrayOutputStream zstdByteArray = new ByteArrayOutputStream();
-+        ZstdOutputStream zstdStream = new ZstdOutputStream​(zstdByteArray, COMPRESSION_LEVEL);
-+        zstdStream.setChecksum​(true);
++        ZstdOutputStream zstdStream = new ZstdOutputStream(zstdByteArray, COMPRESSION_LEVEL);
++        zstdStream.setChecksum(true);
 +        DataOutputStream zstdDataStream = new DataOutputStream(zstdStream);
 +        DataOutputStream dataStream = new DataOutputStream(fileStream);
  
@@ -1334,7 +1354,7 @@ index fc3442b4c7e1f22080fe6bf36d4fade162d6709e..717c2ea94efa9c385d81d4c6a462f467
      }
  }
 diff --git a/src/main/java/net/minecraft/world/level/chunk/storage/RegionFileStorage.java b/src/main/java/net/minecraft/world/level/chunk/storage/RegionFileStorage.java
-index c31b9a6b1d4548d507ecb60d42ca9f96f49f6c4b..69405a4a27318b57b5243781e045b2c686c808e8 100644
+index 8db3bcc63aeb23e5b50864ebea675acc75d184ff..4ce491f0cc1d7d97f759b85b502d592cb6756614 100644
 --- a/src/main/java/net/minecraft/world/level/chunk/storage/RegionFileStorage.java
 +++ b/src/main/java/net/minecraft/world/level/chunk/storage/RegionFileStorage.java
 @@ -20,7 +20,6 @@ import net.minecraft.world.level.ChunkPos;
