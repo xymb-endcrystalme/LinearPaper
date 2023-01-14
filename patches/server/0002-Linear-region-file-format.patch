@@ -1143,7 +1143,7 @@ index dcfe090c269d4cbcc2eb1b6f85392848bb34656c..7c7ddd3fc481c1991faeaf063c05ec8d
  
 -        if (filechannel != null) {
 -            filechannel.close();
-+	int length;
++        int length;
 +        while ((length = in.read(tempBuffer)) >= 0) {
 +            out.write(tempBuffer, 0, length);
          }
