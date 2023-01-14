@@ -5,10 +5,10 @@ Subject: [PATCH] Linear region file format.
 
 
 diff --git a/build.gradle.kts b/build.gradle.kts
-index b133621c1c320bf65a40accd37ab89bb89dd0de7..2460acf251150b5ee8806572e15324ebff9e72b7 100644
+index 5af66aa5b74b2960a8914f512b06ffaf503ddc42..ed30b25bed70a96491073496bf3478c2e81a44b2 100644
 --- a/build.gradle.kts
 +++ b/build.gradle.kts
-@@ -14,6 +14,8 @@ dependencies {
+@@ -12,6 +12,8 @@ dependencies {
      implementation("io.papermc.paper:paper-mojangapi:1.19.2-R0.1-SNAPSHOT") {
          exclude("io.papermc.paper", "paper-api")
      }
@@ -38,10 +38,10 @@ index a08cde4eefe879adcee7c4118bc38f98c5097ed0..85949a5907785e0bb015f4a0c518fdcf
  
                  final boolean finalFailWrite = failedWrite;
 diff --git a/src/main/java/net/minecraft/util/worldupdate/WorldUpgrader.java b/src/main/java/net/minecraft/util/worldupdate/WorldUpgrader.java
-index 2955c1ee153c410ea45fe367bac8597621c9bbd0..df2754d48b6591c1d486610c25e3b494ee98b403 100644
+index 759b125cc1251b9b4f1f443c9f70c482ef5b32f8..c916bf1dee305cb7b32a34864b82e7d95cb66318 100644
 --- a/src/main/java/net/minecraft/util/worldupdate/WorldUpgrader.java
 +++ b/src/main/java/net/minecraft/util/worldupdate/WorldUpgrader.java
-@@ -57,7 +57,7 @@ public class WorldUpgrader {
+@@ -61,7 +61,7 @@ public class WorldUpgrader {
      private volatile int skipped;
      private final Object2FloatMap<ResourceKey<LevelStem>> progressMap = Object2FloatMaps.synchronize(new Object2FloatOpenCustomHashMap(Util.identityStrategy())); // CraftBukkit
      private volatile Component status = Component.translatable("optimizeWorld.stage.counting");
@@ -49,8 +49,8 @@ index 2955c1ee153c410ea45fe367bac8597621c9bbd0..df2754d48b6591c1d486610c25e3b494
 +    public static final Pattern REGEX = Pattern.compile("^r\\.(-?[0-9]+)\\.(-?[0-9]+)\\.linear$");
      private final DimensionDataStorage overworldDataStorage;
  
-     public WorldUpgrader(LevelStorageSource.LevelStorageAccess session, DataFixer dataFixer, WorldGenSettings generatorOptions, boolean eraseCache) {
-@@ -231,7 +231,7 @@ public class WorldUpgrader {
+     public WorldUpgrader(LevelStorageSource.LevelStorageAccess session, DataFixer dataFixer, Registry<LevelStem> dimensionOptionsRegistry, boolean eraseCache) {
+@@ -235,7 +235,7 @@ public class WorldUpgrader {
          File file = this.levelStorage.getDimensionPath((ResourceKey) null).toFile(); // CraftBukkit
          File file1 = new File(file, "region");
          File[] afile = file1.listFiles((file2, s) -> {
@@ -60,7 +60,7 @@ index 2955c1ee153c410ea45fe367bac8597621c9bbd0..df2754d48b6591c1d486610c25e3b494
  
          if (afile == null) {
 diff --git a/src/main/java/net/minecraft/world/level/chunk/storage/RegionFile.java b/src/main/java/net/minecraft/world/level/chunk/storage/RegionFile.java
-index fc3442b4c7e1f22080fe6bf36d4fade162d6709e..a018f2d05df422e3682dfab9e219cbf710cbe921 100644
+index dcfe090c269d4cbcc2eb1b6f85392848bb34656c..7c7ddd3fc481c1991faeaf063c05ec8df9766727 100644
 --- a/src/main/java/net/minecraft/world/level/chunk/storage/RegionFile.java
 +++ b/src/main/java/net/minecraft/world/level/chunk/storage/RegionFile.java
 @@ -3,10 +3,14 @@ package net.minecraft.world.level.chunk.storage;
@@ -883,8 +883,8 @@ index fc3442b4c7e1f22080fe6bf36d4fade162d6709e..a018f2d05df422e3682dfab9e219cbf7
 -        return (int) (Util.getEpochMillis() / 1000L);
 -    }
 -
--    private static boolean isExternalStreamChunk(byte b0) {
--        return (b0 & 128) != 0;
+-    private static boolean isExternalStreamChunk(byte flags) {
+-        return (flags & 128) != 0;
 -    }
 +        ArrayList<byte[]> byteBuffers = new ArrayList<byte[]>();
 +        for(int i = 0 ; i < 32 * 32 ; i++) {
@@ -894,35 +894,35 @@ index fc3442b4c7e1f22080fe6bf36d4fade162d6709e..a018f2d05df422e3682dfab9e219cbf7
 +                byte[] content = new byte[bufferUncompressedSize[i]];
 +                decompressor.decompress(buffer[i], 0, content, 0, bufferUncompressedSize[i]);
  
--    private static byte getExternalChunkVersion(byte b0) {
--        return (byte) (b0 & -129);
+-    private static byte getExternalChunkVersion(byte flags) {
+-        return (byte) (flags & -129);
 -    }
 +                region_total += buffer[i].length;
 +                region_raw += content.length;
  
 -    @Nullable
--    private DataInputStream createChunkInputStream(ChunkPos chunkcoordintpair, byte b0, InputStream inputstream) throws IOException {
--        RegionFileVersion regionfilecompression = RegionFileVersion.fromId(b0);
+-    private DataInputStream createChunkInputStream(ChunkPos pos, byte flags, InputStream stream) throws IOException {
+-        RegionFileVersion regionfilecompression = RegionFileVersion.fromId(flags);
 -
 -        if (regionfilecompression == null) {
--            RegionFile.LOGGER.error("Chunk {} has invalid chunk stream version {}", chunkcoordintpair, b0);
+-            RegionFile.LOGGER.error("Chunk {} has invalid chunk stream version {}", pos, flags);
 -            return null;
 -        } else {
--            return new DataInputStream(regionfilecompression.wrap(inputstream));
+-            return new DataInputStream(regionfilecompression.wrap(stream));
 +                byteBuffers.add(content);
 +            } else byteBuffers.add(null);
          }
 -    }
 -
 -    @Nullable
--    private DataInputStream createExternalChunkInputStream(ChunkPos chunkcoordintpair, byte b0) throws IOException {
--        Path path = this.getExternalChunkPath(chunkcoordintpair);
+-    private DataInputStream createExternalChunkInputStream(ChunkPos pos, byte flags) throws IOException {
+-        Path path = this.getExternalChunkPath(pos);
 -
 -        if (!Files.isRegularFile(path, new LinkOption[0])) {
 -            RegionFile.LOGGER.error("External chunk path {} is not file", path);
 -            return null;
 -        } else {
--            return this.createChunkInputStream(chunkcoordintpair, b0, Files.newInputStream(path));
+-            return this.createChunkInputStream(pos, flags, Files.newInputStream(path));
 +        for(int i = 0 ; i < 32 * 32 ; i++) {
 +            zstdDataStream.writeInt(this.bufferUncompressedSize[i]);
 +            zstdDataStream.writeInt(0);
@@ -1045,8 +1045,8 @@ index fc3442b4c7e1f22080fe6bf36d4fade162d6709e..a018f2d05df422e3682dfab9e219cbf7
 +        return new DataOutputStream(new BufferedOutputStream(new RegionFile.ChunkBuffer(pos)));
      }
  
--    public void clear(ChunkPos chunkcoordintpair) throws IOException {
--        int i = RegionFile.getOffsetIndex(chunkcoordintpair);
+-    public void clear(ChunkPos pos) throws IOException {
+-        int i = RegionFile.getOffsetIndex(pos);
 -        int j = this.offsets.get(i);
 +    private class ChunkBuffer extends ByteArrayOutputStream {
  
@@ -1054,18 +1054,18 @@ index fc3442b4c7e1f22080fe6bf36d4fade162d6709e..a018f2d05df422e3682dfab9e219cbf7
 -            this.offsets.put(i, 0);
 -            this.timestamps.put(i, RegionFile.getTimestamp());
 -            this.writeHeader();
--            Files.deleteIfExists(this.getExternalChunkPath(chunkcoordintpair));
+-            Files.deleteIfExists(this.getExternalChunkPath(pos));
 -            this.usedSectors.free(RegionFile.getSectorNumber(j), RegionFile.getNumSectors(j));
 -        }
 -    }
 +        private final ChunkPos pos;
  
--    protected synchronized void write(ChunkPos pos, ByteBuffer bytebuffer) throws IOException {
+-    protected synchronized void write(ChunkPos pos, ByteBuffer buf) throws IOException {
 -        int i = RegionFile.getOffsetIndex(pos);
 -        int j = this.offsets.get(i);
 -        int k = RegionFile.getSectorNumber(j);
 -        int l = RegionFile.getNumSectors(j);
--        int i1 = bytebuffer.remaining();
+-        int i1 = buf.remaining();
 -        int j1 = RegionFile.sizeToSectors(i1);
 -        int k1;
 -        RegionFile.CommitOp regionfile_b;
@@ -1076,7 +1076,7 @@ index fc3442b4c7e1f22080fe6bf36d4fade162d6709e..a018f2d05df422e3682dfab9e219cbf7
 -            RegionFile.LOGGER.warn("Saving oversized chunk {} ({} bytes} to external file {}", new Object[]{pos, i1, path});
 -            j1 = 1;
 -            k1 = this.usedSectors.allocate(j1);
--            regionfile_b = this.writeToExternalFile(path, bytebuffer);
+-            regionfile_b = this.writeToExternalFile(path, buf);
 -            ByteBuffer bytebuffer1 = this.createExternalStub();
 -
 -            this.file.write(bytebuffer1, (long) (k1 * 4096));
@@ -1085,7 +1085,7 @@ index fc3442b4c7e1f22080fe6bf36d4fade162d6709e..a018f2d05df422e3682dfab9e219cbf7
 -            regionfile_b = () -> {
 -                Files.deleteIfExists(this.getExternalChunkPath(pos));
 -            };
--            this.file.write(bytebuffer, (long) (k1 * 4096));
+-            this.file.write(buf, (long) (k1 * 4096));
 +        public ChunkBuffer(ChunkPos chunkcoordintpair) {
 +            super();
 +            this.pos = chunkcoordintpair;
@@ -1118,13 +1118,13 @@ index fc3442b4c7e1f22080fe6bf36d4fade162d6709e..a018f2d05df422e3682dfab9e219cbf7
 -        return bytebuffer;
 -    }
 -
--    private RegionFile.CommitOp writeToExternalFile(Path path, ByteBuffer bytebuffer) throws IOException {
+-    private RegionFile.CommitOp writeToExternalFile(Path path, ByteBuffer buf) throws IOException {
 -        Path path1 = Files.createTempFile(this.externalFileDir, "tmp", (String) null);
 -        FileChannel filechannel = FileChannel.open(path1, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
 -
 -        try {
--            ((java.nio.Buffer) bytebuffer).position(5); // CraftBukkit - decompile error
--            filechannel.write(bytebuffer);
+-            ((java.nio.Buffer) buf).position(5); // CraftBukkit - decompile error
+-            filechannel.write(buf);
 -        } catch (Throwable throwable) {
 -            com.destroystokyo.paper.exception.ServerInternalException.reportInternalException(throwable); // Paper
 -            if (filechannel != null) {
@@ -1354,7 +1354,7 @@ index fc3442b4c7e1f22080fe6bf36d4fade162d6709e..a018f2d05df422e3682dfab9e219cbf7
      }
  }
 diff --git a/src/main/java/net/minecraft/world/level/chunk/storage/RegionFileStorage.java b/src/main/java/net/minecraft/world/level/chunk/storage/RegionFileStorage.java
-index 8db3bcc63aeb23e5b50864ebea675acc75d184ff..4ce491f0cc1d7d97f759b85b502d592cb6756614 100644
+index bd502ca721de0cab438d995efa00ad0554c0d2fe..f9d307b39061f3dba9dfa645a0e08c7cae99e6a8 100644
 --- a/src/main/java/net/minecraft/world/level/chunk/storage/RegionFileStorage.java
 +++ b/src/main/java/net/minecraft/world/level/chunk/storage/RegionFileStorage.java
 @@ -20,7 +20,6 @@ import net.minecraft.world.level.ChunkPos;
@@ -1375,11 +1375,11 @@ index 8db3bcc63aeb23e5b50864ebea675acc75d184ff..4ce491f0cc1d7d97f759b85b502d592c
          }
  
 @@ -96,7 +95,7 @@ public class RegionFileStorage implements AutoCloseable {
-             Files.createDirectories(this.folder);
+             FileUtil.createDirectoriesSafe(this.folder);
              Path path = this.folder;
              int j = chunkcoordintpair.getRegionX();
 -            Path path1 = path.resolve("r." + j + "." + chunkcoordintpair.getRegionZ() + ".mca"); // Paper - diff on change
 +            Path path1 = path.resolve("r." + j + "." + chunkcoordintpair.getRegionZ() + ".linear"); // Paper - diff on change
-             if (existingOnly && !Files.exists(path1)) return null; // CraftBukkit
+             if (existingOnly && !java.nio.file.Files.exists(path1)) return null; // CraftBukkit
              RegionFile regionfile1 = new RegionFile(path1, this.folder, this.sync, this.isChunkData); // Paper - allow for chunk regionfiles to regen header
  
