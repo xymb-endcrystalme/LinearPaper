@@ -5,7 +5,7 @@ Subject: [PATCH] Linear region file format.
 
 
 diff --git a/build.gradle.kts b/build.gradle.kts
-index 5af66aa5b74b2960a8914f512b06ffaf503ddc42..ed30b25bed70a96491073496bf3478c2e81a44b2 100644
+index 2fb50b1ef8a77b9dac2b346ab2b50b1dcdf61889..67b6e5da5b623277e060981d4772ced6936be6f1 100644
 --- a/build.gradle.kts
 +++ b/build.gradle.kts
 @@ -12,6 +12,8 @@ dependencies {
@@ -38,7 +38,7 @@ index a08cde4eefe879adcee7c4118bc38f98c5097ed0..85949a5907785e0bb015f4a0c518fdcf
  
                  final boolean finalFailWrite = failedWrite;
 diff --git a/src/main/java/net/minecraft/util/worldupdate/WorldUpgrader.java b/src/main/java/net/minecraft/util/worldupdate/WorldUpgrader.java
-index 759b125cc1251b9b4f1f443c9f70c482ef5b32f8..c916bf1dee305cb7b32a34864b82e7d95cb66318 100644
+index e0bfeebeaac1aaea64bc07cdfdf7790e3e43ca7b..a71f222f80b0ca03bc98a30e34ea021de98d07c2 100644
 --- a/src/main/java/net/minecraft/util/worldupdate/WorldUpgrader.java
 +++ b/src/main/java/net/minecraft/util/worldupdate/WorldUpgrader.java
 @@ -61,7 +61,7 @@ public class WorldUpgrader {
@@ -60,7 +60,7 @@ index 759b125cc1251b9b4f1f443c9f70c482ef5b32f8..c916bf1dee305cb7b32a34864b82e7d9
  
          if (afile == null) {
 diff --git a/src/main/java/net/minecraft/world/level/chunk/storage/RegionFile.java b/src/main/java/net/minecraft/world/level/chunk/storage/RegionFile.java
-index dcfe090c269d4cbcc2eb1b6f85392848bb34656c..7c7ddd3fc481c1991faeaf063c05ec8df9766727 100644
+index dcfe090c269d4cbcc2eb1b6f85392848bb34656c..2d694fa63dfd609c5ec0082c83a6f9f72971f654 100644
 --- a/src/main/java/net/minecraft/world/level/chunk/storage/RegionFile.java
 +++ b/src/main/java/net/minecraft/world/level/chunk/storage/RegionFile.java
 @@ -3,10 +3,14 @@ package net.minecraft.world.level.chunk.storage;
@@ -78,7 +78,7 @@ index dcfe090c269d4cbcc2eb1b6f85392848bb34656c..7c7ddd3fc481c1991faeaf063c05ec8d
  import java.io.IOException;
  import java.io.InputStream;
  import java.io.OutputStream;
-@@ -19,1037 +23,362 @@ import java.nio.file.Path;
+@@ -19,1037 +23,364 @@ import java.nio.file.Path;
  import java.nio.file.StandardCopyOption;
  import java.nio.file.StandardOpenOption;
  import java.util.zip.InflaterInputStream; // Paper
@@ -957,6 +957,8 @@ index dcfe090c269d4cbcc2eb1b6f85392848bb34656c..7c7ddd3fc481c1991faeaf063c05ec8d
  
 -    private static int getSectorNumber(int sectorData) {
 -        return sectorData >> 8 & 16777215;
++        fileStream.getFD().sync();
++        fileStream.getChannel().force(true); // Ensure atomicity on Btrfs
 +        fileStream.close();
 +        Files.move(tempFile.toPath(), this.regionFile, StandardCopyOption.REPLACE_EXISTING);
      }
