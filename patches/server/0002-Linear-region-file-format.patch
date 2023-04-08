@@ -60,7 +60,7 @@ index e0bfeebeaac1aaea64bc07cdfdf7790e3e43ca7b..a71f222f80b0ca03bc98a30e34ea021d
  
          if (afile == null) {
 diff --git a/src/main/java/net/minecraft/world/level/chunk/storage/RegionFile.java b/src/main/java/net/minecraft/world/level/chunk/storage/RegionFile.java
-index dcfe090c269d4cbcc2eb1b6f85392848bb34656c..2d694fa63dfd609c5ec0082c83a6f9f72971f654 100644
+index dcfe090c269d4cbcc2eb1b6f85392848bb34656c..e99cde76c72322bba179bb1d98b9688af964190f 100644
 --- a/src/main/java/net/minecraft/world/level/chunk/storage/RegionFile.java
 +++ b/src/main/java/net/minecraft/world/level/chunk/storage/RegionFile.java
 @@ -3,10 +3,14 @@ package net.minecraft.world.level.chunk.storage;
@@ -78,7 +78,7 @@ index dcfe090c269d4cbcc2eb1b6f85392848bb34656c..2d694fa63dfd609c5ec0082c83a6f9f7
  import java.io.IOException;
  import java.io.InputStream;
  import java.io.OutputStream;
-@@ -19,1037 +23,364 @@ import java.nio.file.Path;
+@@ -19,1037 +23,366 @@ import java.nio.file.Path;
  import java.nio.file.StandardCopyOption;
  import java.nio.file.StandardOpenOption;
  import java.util.zip.InflaterInputStream; // Paper
@@ -714,6 +714,7 @@ index dcfe090c269d4cbcc2eb1b6f85392848bb34656c..2d694fa63dfd609c5ec0082c83a6f9f7
 +                        flush();
 +                    } catch(IOException ex) {
 +                        LOGGER.error("Region file " + this.regionFile.toAbsolutePath() + " flush failed");
++                        ex.printStackTrace();
                      }
                  }
 -                // Paper start - recalculate header on header corruption
@@ -953,12 +954,13 @@ index dcfe090c269d4cbcc2eb1b6f85392848bb34656c..2d694fa63dfd609c5ec0082c83a6f9f7
 +        dataStream.write(compressed, 0, compressed.length);
 +        dataStream.writeLong(SUPERBLOCK);
 +
++        dataStream.flush();
++        fileStream.getFD().sync();
++        fileStream.getChannel().force(true); // Ensure atomicity on Btrfs
 +        dataStream.close();
  
 -    private static int getSectorNumber(int sectorData) {
 -        return sectorData >> 8 & 16777215;
-+        fileStream.getFD().sync();
-+        fileStream.getChannel().force(true); // Ensure atomicity on Btrfs
 +        fileStream.close();
 +        Files.move(tempFile.toPath(), this.regionFile, StandardCopyOption.REPLACE_EXISTING);
      }
