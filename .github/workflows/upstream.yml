@@ -39,23 +39,29 @@ jobs:
         run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
       - name: Check outputs
         run: echo ${{ steps.vars.outputs.sha_short }}
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ steps.vars.outputs.sha_short }}
-          release_name: "LinearPaper 1.19.4"
-          body: |
-            LinearPaper updated upstream
-          draft: false
-          prerelease: false
-      - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v3
-        with:
-          commit-message: Update Upstream
-          branch: update-upstream
-          delete-branch: true
-          title: 'Update Upstream'
-          body: ''
+#      - name: Create Release
+#        id: create_release
+#        uses: actions/create-release@v1
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        with:
+#          tag_name: ${{ steps.vars.outputs.sha_short }}
+#          release_name: "LinearPaper 1.19.4"
+#          body: |
+#            LinearPaper updated upstream
+#          draft: false
+#          prerelease: false
+#      - name: Create Pull Request
+#        uses: peter-evans/create-pull-request@v3
+#        with:
+#          commit-message: Update Upstream
+#          branch: update-upstream
+#          delete-branch: true
+#          title: 'Update Upstream'
+#          body: ''
+      - name: Make a commit
+        run: |
+          git config --global user.name 'Actions'
+          git config --global user.email 'noreply@example.com'
+          git commit -am "Update upstream"
+          git push
