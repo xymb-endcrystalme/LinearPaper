@@ -1,7 +1,7 @@
 name: Update upstream
 on:
-#  schedule:
-#    - cron: '0 15 * * *' # Once a day at 5pm GMT+2
+  schedule:
+    - cron: '0 20 * * *' # Once a day at 5pm GMT+2
   workflow_dispatch: # on button click
 
 jobs:
@@ -39,18 +39,18 @@ jobs:
         run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
       - name: Check outputs
         run: echo ${{ steps.vars.outputs.sha_short }}
-#      - name: Create Release
-#        id: create_release
-#        uses: actions/create-release@v1
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#        with:
-#          tag_name: ${{ steps.vars.outputs.sha_short }}
-#          release_name: "LinearPaper 1.19.4"
-#          body: |
-#            LinearPaper updated upstream
-#          draft: false
-#          prerelease: false
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.vars.outputs.sha_short }}
+          release_name: "LinearPaper 1.19.4"
+          body: |
+            LinearPaper updated upstream
+          draft: false
+          prerelease: false
 #      - name: Create Pull Request
 #        uses: peter-evans/create-pull-request@v3
 #        with:
