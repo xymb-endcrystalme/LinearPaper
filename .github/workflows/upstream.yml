@@ -61,3 +61,11 @@ jobs:
           asset_path: build/libs/linearpaper-paperclip-1.19.4-R0.1-SNAPSHOT-reobf.jar
           asset_name: linearpaper-paperclip-1.19.4-R0.1-SNAPSHOT-reobf.jar
           asset_content_type: application/java-archive
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v3
+        with:
+          commit-message: Update Upstream
+          branch: update-upstream
+          delete-branch: true
+          title: 'Update Upstream'
+          body: ''
