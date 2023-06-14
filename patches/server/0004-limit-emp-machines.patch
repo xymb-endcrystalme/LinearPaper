@@ -1,0 +1,36 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Xymb <xymb@endcrystal.me>
+Date: Mon, 31 Oct 2022 06:59:54 +0100
+Subject: [PATCH] Limit EMP lag machines to like 30ms.
+
+
+diff --git a/src/main/java/net/minecraft/server/level/ServerLevel.java b/src/main/java/net/minecraft/server/level/ServerLevel.java
+index 9f720297a2740c95b9a3a7add8622c8e5784d7b5..f2edf8a48dfc0a85ed3fce8d8254218a0330f2a3 100644
+--- a/src/main/java/net/minecraft/server/level/ServerLevel.java
++++ b/src/main/java/net/minecraft/server/level/ServerLevel.java
+@@ -1888,7 +1888,13 @@ public class ServerLevel extends Level implements WorldGenLevel {
+     private void runBlockEvents() {
+         this.blockEventsToReschedule.clear();
+
++        final long MAX_LENGTH = 10000000;
++
++        long start = System.nanoTime();
++        int length = this.blockEvents.size();
++        int count = 0;
+         while (!this.blockEvents.isEmpty()) {
++            count++;
+             BlockEventData blockactiondata = (BlockEventData) this.blockEvents.removeFirst();
+
+             if (this.shouldTickBlocksAt(blockactiondata.pos())) {
+@@ -1898,7 +1904,11 @@ public class ServerLevel extends Level implements WorldGenLevel {
+             } else {
+                 this.blockEventsToReschedule.add(blockactiondata);
+             }
++
++            if (System.nanoTime() - start > MAX_LENGTH)
++                break;
+         }
++        xymb.RapidLogger.i().timedLogRaw(start, "RUNBLOCKEVENTS;" + String.valueOf(length) + ";" + String.valueOf(count)); // Xymb
+
+         this.blockEvents.addAll(this.blockEventsToReschedule);
+     }

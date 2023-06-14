@@ -1,0 +1,60 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Xymb <xymb@endcrystal.me>
+Date: Mon, 31 Oct 2022 00:49:13 +0100
+Subject: [PATCH] Limit redstone to 10ms per tick.
+
+
+diff --git a/src/main/java/net/minecraft/world/ticks/LevelTicks.java b/src/main/java/net/minecraft/world/ticks/LevelTicks.java
+index 48525f28ceac97b21482fb109bb11db26bef4af0..0fece09fcc4308f4c230134b07f270df281d4a6e 100644
+--- a/src/main/java/net/minecraft/world/ticks/LevelTicks.java
++++ b/src/main/java/net/minecraft/world/ticks/LevelTicks.java
+@@ -94,12 +94,20 @@ public class LevelTicks<T> implements LevelTickAccess<T> {
+     public void tick(long time, int maxTicks, BiConsumer<BlockPos, T> ticker) {
+         ProfilerFiller profilerFiller = this.profiler.get();
+         profilerFiller.push("collect");
+-        this.collectTicks(time, maxTicks, profilerFiller);
++        if (this.toRunThisTick.isEmpty()) {
++            long start = System.nanoTime();
++            this.collectTicks(time, maxTicks, profilerFiller);
++            xymb.RapidLogger.i().timedLogRaw(start, "LEVELTICKS_COLLECT"); // Xymb
++        }
+         profilerFiller.popPush("run");
+         profilerFiller.incrementCounter("ticksToRun", this.toRunThisTick.size());
+         this.runCollectedTicks(ticker);
+         profilerFiller.popPush("cleanup");
+-        this.cleanupAfterTick();
++        if (this.toRunThisTick.isEmpty()) {
++            long start = System.nanoTime();
++            this.cleanupAfterTick();
++            xymb.RapidLogger.i().timedLogRaw(start, "LEVELTICKS_CLEAN"); // Xymb
++        }
+         profilerFiller.pop();
+     }
+
+@@ -197,7 +205,13 @@ public class LevelTicks<T> implements LevelTickAccess<T> {
+     }
+
+     private void runCollectedTicks(BiConsumer<BlockPos, T> ticker) {
++        final long MAX_LENGTH = 10000000;
++
++        long start = System.nanoTime();
++        int length = this.toRunThisTick.size();
++        int count = 0;
+         while(!this.toRunThisTick.isEmpty()) {
++            count++;
+             ScheduledTick<T> scheduledTick = this.toRunThisTick.poll();
+             if (!this.toRunThisTickSet.isEmpty()) {
+                 this.toRunThisTickSet.remove(scheduledTick);
+@@ -205,8 +219,11 @@ public class LevelTicks<T> implements LevelTickAccess<T> {
+
+             this.alreadyRunThisTick.add(scheduledTick);
+             ticker.accept(scheduledTick.pos(), scheduledTick.type());
+-        }
+
++            if (System.nanoTime() - start > MAX_LENGTH)
++                break;
++        }
++        xymb.RapidLogger.i().timedLogRaw(start, "LEVELTICKS;" + String.valueOf(length) + ";" + String.valueOf(count)); // Xymb
+     }
+
+     private void cleanupAfterTick() {
